@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-// const index = require('./public/assets/js/index')
+const fs = require('fs');
 
 const app = express();
 const PORT = 3001;
@@ -18,9 +18,32 @@ app.get('/notes', (req, res) =>
   res.sendFile(path.join(__dirname, './public/notes.html'))
 );
 
-app.get('/api/notes', (req, res) => 
-  res.sendFile(path.join(__dirname, './db/db.json'))
-);
+app.get('/api/notes', (req, res) => {
+  const notes = getNotes();
+  res.json(notes);
+});
+
+app.post('/api/notes', (req, res) => {
+  const newNote = req.body;
+  newNote.id = generateUniqueId();
+  const notes = getNotes();
+  notes.push(newNote);
+  saveNotes(notes);
+  res.json(newNote);
+});
+
+function getNotes() {
+  const data = fs.readFileSync(path.join(__dirname, './db/db.json'), 'utf8');
+  return JSON.parse(data) || [];
+}
+
+function saveNotes(notes) {
+  fs.writeFileSync(path.join(__dirname, './db/db.json'), JSON.stringify(notes));
+}
+
+function generateUniqueId() {
+  return Date.now().toString();
+}
 
 app.listen(PORT, () =>
   console.log(`App listening at http://localhost:${PORT}`)
